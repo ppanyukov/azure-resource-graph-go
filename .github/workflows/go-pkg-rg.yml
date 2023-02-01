@@ -6,10 +6,10 @@ name: Go pkg/rg
 on:
   push:
     branches: [ "main" ]
-    paths: [ "pkg/rg" ]
+    paths: [ "pkg/rg/**", ".github/workflows/go-pkg-rg.yaml" ]
   pull_request:
     branches: [ "main" ]
-    paths: [ "pkg/rg" ]
+    paths: [ "pkg/rg/**", ".github/workflows/go-pkg-rg.yaml" ]
 
 jobs:
 
