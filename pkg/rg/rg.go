@@ -56,6 +56,26 @@ func getDefaultArmClient() (*armresourcegraph2.Client, error) {
 type ExecOptions struct {
 }
 
+// Exec executes Azure Resource Graph query and returns rows from the result unmarshalled as an array of T.
+//
+// This function uses shared cached Azure Token Credential obtained by calling official Azure SDK for Go
+// function [azidentity.NewDefaultAzureCredential].
+//
+// Example:
+//
+//	type record struct {
+//		Name string
+//		Type string
+//	}
+//
+//	items, err := rg.Exec(context.Background, "resources | project name, type | order by name, type", nil)
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	for _, item := range items {
+//		fmt.printf("%s, %s\n", item.Name, item.Type)
+//  }
 func Exec[T any](ctx context.Context, query string, options *ExecOptions) ([]T, error) {
 	queryRequest := armresourcegraph2.QueryRequest{
 		Query: &query,
