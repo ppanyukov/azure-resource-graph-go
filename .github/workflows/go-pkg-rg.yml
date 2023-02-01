@@ -6,10 +6,8 @@ name: Go pkg/rg
 on:
   push:
     branches: [ "main" ]
-    paths: [ "pkg/rg/**", ".github/workflows/go-pkg-rg.yaml" ]
   pull_request:
     branches: [ "main" ]
-    paths: [ "pkg/rg/**", ".github/workflows/go-pkg-rg.yaml" ]
 
 jobs:
 
@@ -24,7 +22,7 @@ jobs:
           go-version: 1.18
 
       - name: Build
-        run: go build -v ./pkg/rg/...
+        run: cd ./pkg/rg && go build -v ./...
 
       - name: Test
-        run: go test -v ./pkg/rg/...
+        run: cd ./pkg/rg && go test -v ./...
