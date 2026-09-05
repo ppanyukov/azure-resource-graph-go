@@ -4,7 +4,7 @@ This repo provides Go package to run queries against Azure Resource Graph in a s
 
 The main use case is for various scripts and utilities which need to query information about Azure infrastructure across subscriptions and is a substitute for a lot of the official Azure SDK for Go, and is much simpler and faster to use too. 
 
-Currently, there is only one top-level function `rg.Exec` which just takes query text as an argument. There are no ways to customise anything, e.g. provide the list of subscriptions against which the query runs, or provide custom Credentials Token. These may be added later if needed.
+The top-level function `rg.Exec` just takes query text as an argument and uses a shared default Azure Token Credential. If you need to supply your own credential, use `rg.ExecClient` with a `rg.RgClient` you construct yourself — see "Notes on authentication" below. There is currently no way to customise other query options, e.g. the list of subscriptions against which the query runs. This may be added later if needed.
 
 
 
@@ -77,7 +77,28 @@ func main() {
 
 The method `rg.Exec` uses a cached shared Azure Token Credential maintained by the package created by `azidentity.NewDefaultAzureCredential()`. Repeated calls to `rg.Exec` reuse this token credential.
 
-Authentication is performed as per standard Azure SDK from the following sources:
+If you want to use your own `azcore.TokenCredential` instead of the package's default, construct a `rg.RgClient` with `rg.NewRgClient(cred)` once and call `rg.ExecClient` instead of `rg.Exec`:
+
+```go
+cred, err := azidentity.NewClientSecretCredential(tenantID, clientID, clientSecret, nil)
+if err != nil {
+	log.Fatal(err)
+}
+
+r, err := rg.NewRgClient(cred)
+if err != nil {
+	log.Fatal(err)
+}
+
+items, err := rg.ExecClient[record](r, context.Background(), query, nil)
+if err != nil {
+	log.Fatal(err)
+}
+```
+
+Reuse the same `r` across calls — it wraps a single query pipeline bound to `cred`, so building a new `RgClient` per call is wasteful.
+
+Authentication for the `rg.Exec` default credential is performed as per standard Azure SDK from the following sources:
 
 * EnvironmentCredential
 * ManagedIdentityCredentialOptions
