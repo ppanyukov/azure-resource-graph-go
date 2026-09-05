@@ -98,6 +98,8 @@ if err != nil {
 
 Reuse the same `r` across calls — it wraps a single query pipeline bound to `cred`, so building a new `RgClient` per call is wasteful.
 
+For the design rationale behind this API shape (why `Exec`/`ExecClient` are free functions rather than methods, and why there's no `SetCred`/default-client override), see [ADR 1](docs/adr/0001-generic-exec-free-functions.md).
+
 Authentication for the `rg.Exec` default credential is performed as per standard Azure SDK from the following sources:
 
 * EnvironmentCredential
