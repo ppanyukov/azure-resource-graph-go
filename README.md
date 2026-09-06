@@ -50,7 +50,9 @@ However, since the official Azure SDK for Go Resource Graph client is also pain 
 
 Requirement:
 
-* Go 1.18+ (because generics)
+* Go 1.23+
+  - 1.18+ for generics support
+  - 1.23+ for range-over-func iterator support (planned)
 
 Install:
 
