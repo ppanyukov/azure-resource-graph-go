@@ -14,38 +14,44 @@ import (
 	"sync"
 )
 
-// RgClient is an Azure Resource Graph query client bound to a specific
-// [azcore.TokenCredential]. Construct one with [NewRgClient] and reuse it
+// ClientOptions is reserved for future expandability of [NewClient], e.g.
+// embedding [arm.ClientOptions] to allow a custom transport, retry policy,
+// or cloud configuration.
+type ClientOptions struct {
+}
+
+// Client is an Azure Resource Graph query client bound to a specific
+// [azcore.TokenCredential]. Construct one with [NewClient] and reuse it
 // across calls to [ExecClient] — construction wraps a single credential in
-// a query pipeline, so building a new [RgClient] per call defeats the point.
+// a query pipeline, so building a new [Client] per call defeats the point.
 //
-// RgClient has no exported way to change its credential after construction:
+// Client has no exported way to change its credential after construction:
 // callers who need a shared, swappable default client are expected to hold
 // their own package-level variable or wrapper type, the same way they would
 // for any other Azure SDK client.
-type RgClient struct {
+type Client struct {
 	armClient *armresourcegraph2.Client
 }
 
-// NewRgClient creates a new [RgClient] using the given credential.
-func NewRgClient(cred azcore.TokenCredential) (*RgClient, error) {
+// NewClient creates a new [Client] using the given credential.
+func NewClient(cred azcore.TokenCredential, options *ClientOptions) (*Client, error) {
 	armClient, err := armresourcegraph2.NewClient(cred, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return &RgClient{armClient: armClient}, nil
+	return &Client{armClient: armClient}, nil
 }
 
-// defaultClient is the lazily-initialized [RgClient] used by [Exec], built
+// defaultClient is the lazily-initialized [Client] used by [Exec], built
 // at most once using [azidentity.NewDefaultAzureCredential].
 var defaultClient = struct {
 	once   sync.Once
-	client *RgClient
+	client *Client
 	err    error
 }{}
 
-func getDefaultClient() (*RgClient, error) {
+func getDefaultClient() (*Client, error) {
 	defaultClient.once.Do(func() {
 		cred, err := azidentity.NewDefaultAzureCredential(nil)
 		if err != nil {
@@ -53,7 +59,7 @@ func getDefaultClient() (*RgClient, error) {
 			return
 		}
 
-		defaultClient.client, defaultClient.err = NewRgClient(cred)
+		defaultClient.client, defaultClient.err = NewClient(cred, nil)
 	})
 
 	return defaultClient.client, defaultClient.err
@@ -65,7 +71,7 @@ type ExecOptions struct {
 
 // Exec executes Azure Resource Graph query and returns rows from the result unmarshalled as an array of T.
 //
-// This function uses a shared, lazily-initialized [RgClient] built with the Azure Token Credential
+// This function uses a shared, lazily-initialized [Client] built with the Azure Token Credential
 // obtained by calling official Azure SDK for Go function [azidentity.NewDefaultAzureCredential].
 //
 // Use [ExecClient] instead if you need to supply your own [azcore.TokenCredential].
@@ -94,22 +100,22 @@ func Exec[T any](ctx context.Context, query string, options *ExecOptions) ([]T, 
 	return ExecClient[T](client, ctx, query, options)
 }
 
-// ExecClient executes Azure Resource Graph query using the given [RgClient] and returns rows
+// ExecClient executes Azure Resource Graph query using the given [Client] and returns rows
 // from the result unmarshalled as an array of T.
 //
 // Use this instead of [Exec] when you need to supply your own [azcore.TokenCredential] rather
-// than relying on the package's shared default. Construct the [RgClient] once with [NewRgClient]
+// than relying on the package's shared default. Construct the [Client] once with [NewClient]
 // and reuse it across calls.
 //
 // Example:
 //
-//	r, err := rg.NewRgClient(myCredential)
+//	r, err := rg.NewClient(myCredential, nil)
 //	if err != nil {
 //		panic(err)
 //	}
 //
 //	items, err := rg.ExecClient[record](r, context.Background(), "resources | project name, type", nil)
-func ExecClient[T any](r *RgClient, ctx context.Context, query string, options *ExecOptions) ([]T, error) {
+func ExecClient[T any](r *Client, ctx context.Context, query string, options *ExecOptions) ([]T, error) {
 	queryRequest := armresourcegraph2.QueryRequest{
 		Query: &query,
 	}

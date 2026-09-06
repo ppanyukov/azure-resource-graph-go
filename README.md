@@ -77,7 +77,7 @@ func main() {
 
 The method `rg.Exec` uses a cached shared Azure Token Credential maintained by the package created by `azidentity.NewDefaultAzureCredential()`. Repeated calls to `rg.Exec` reuse this token credential.
 
-If you want to use your own `azcore.TokenCredential` instead of the package's default, construct a `rg.RgClient` with `rg.NewRgClient(cred)` once and call `rg.ExecClient` instead of `rg.Exec`:
+If you want to use your own `azcore.TokenCredential` instead of the package's default, construct a `rg.Client` with `rg.NewClient(cred, nil)` once and call `rg.ExecClient` instead of `rg.Exec`:
 
 ```go
 cred, err := azidentity.NewClientSecretCredential(tenantID, clientID, clientSecret, nil)
@@ -85,7 +85,7 @@ if err != nil {
 	log.Fatal(err)
 }
 
-r, err := rg.NewRgClient(cred)
+r, err := rg.NewClient(cred, nil)
 if err != nil {
 	log.Fatal(err)
 }
@@ -96,7 +96,7 @@ if err != nil {
 }
 ```
 
-Reuse the same `r` across calls — it wraps a single query pipeline bound to `cred`, so building a new `RgClient` per call is wasteful.
+Reuse the same `r` across calls — it wraps a single query pipeline bound to `cred`, so building a new `Client` per call is wasteful.
 
 For the design rationale behind this API shape (why `Exec`/`ExecClient` are free functions rather than methods, and why there's no `SetCred`/default-client override), see [ADR 1](docs/adr/0001-generic-exec-free-functions.md).
 
