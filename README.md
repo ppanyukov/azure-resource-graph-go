@@ -1,15 +1,49 @@
 # azure-resource-graph-go
 
-This repo provides Go package to run queries against Azure Resource Graph in a simple, convenient way, and unmarshalls results into user-specified data types just like `json.Unmarshal` does.
+Simple, convenient way to exec Azure Resource Graph queries in Go with automatic credentials, automatic paging, and **unmarshalling results into user-specified data types `T`** just like `json.Unmarshal` does.
 
 The main use case is for various scripts and utilities which need to query information about Azure infrastructure across subscriptions and is a substitute for a lot of the official Azure SDK for Go, and is much simpler and faster to use too. 
 
-The top-level function `rg.Exec` just takes query text as an argument and uses a shared default Azure Token Credential. If you need to supply your own credential, use `rg.ExecClient` with a `rg.RgClient` you construct yourself — see "Notes on authentication" below. There is currently no way to customise other query options, e.g. the list of subscriptions against which the query runs. This may be added later if needed.
+The top-level function `rg.Exec` just takes query text as an argument and uses an automatic internal package-maintained shared default Azure Token Credential (there are ways to customise this, see "Notes on authentication" below). 
+
+(*There is currently no way to customise other query options, e.g. the list of subscriptions against which the query runs. This may be added later if needed.*)
+
+See `examples` section and directory for all samples of usage.
+
+### Why
+
+**Why not use `armresourcegraph` package from Azure SDK directly?**
+
+This package provides multiple advantages:
+
+* **Much simpler usage**. The interface is simplified for the most common use cases. The native SDK has many data types, pointers, etc.
+
+* **Automatic credentials**. No need to setup Azure authentication for simple use cases. Own credentials can still be supplied when needed.
+
+* **Automatic paging**. All results are returned in an array directly, no need to have boilerplate code to handle paging.
+
+* **Efficient automatic direct unmarshall into user type `T`**. Native SDK returns types of `any`. Not only the user would need to handle this, but this also would mean double-unmarshall: first marshal the native result into JSON, then back into user type. This package avoids this by directly unmarshalling raw results in the user type.
 
 
+**Why use Resource Graph and not use resource-specific ARM clients from Azure SDK?**
 
-See `examples` directory for all samples of usage.
+The official Azure SDK for Go is difficult to use:
 
+* Separate client for each kind of resource, needs to be imported separately.
+* Clients work on subscription level. To list things across subscription requires extra steps and is also slow.
+* Slow as they pull down a lot of stuff that's probably not needed.
+* Complex data types which are difficult to use, lots of pointers.
+* Not to mention paging which needs to be handled by the user.
+
+It's much better to use Azure Resource Graph in many cases:
+
+* Almost all data provided by ARM clients can be obtained using Resource Graph.
+* Works across subscriptions by default.
+* Much faster.
+* Allows advanced filtering, projection, joins, sort order and so on in `KQL`.
+* Returns data only needed in the required shape/form.
+
+However, since the official Azure SDK for Go Resource Graph client is also pain to use, here we have this package `rg`.
 
 
 ### Usage
@@ -59,6 +93,7 @@ func main() {
 	`
 
 	// Exec the query. This returns results unmarshalled as []record.
+	// Automatic internal shared credential will be used here.
 	items, err := rg.Exec[record](context.Background(), query, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -120,31 +155,4 @@ For full up-to-date list of env vars etc see:
 * https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#readme-authenticate-with-defaultazurecredential
 * https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#DefaultAzureCredential
 * https://github.com/Azure/azure-sdk-for-go/tree/main/sdk/azidentity#environment-variables
-
-
-
-### Motivation
-
-The official Azure SDK for Go is difficult to use for the following reasons:
-
-* Regular ARM clients a supplied for each kind of resource and each needs to be imported separately.
-* Regular ARM clients work on subscription level. To list things across subscription requires extra steps and is also slow.
-* Regular ARM clients are slow as they pull down a lot of stuff that's probably not needed.
-
-It's much better to use Azure Resource Graph because:
-
-* Almost all data provided by ARM clients can be obtained using Resource Graph.
-* It works across subscriptions by default.
-* It's much faster.
-* Allows advanced filtering, projection, joins, sort order and so on.
-
-However, the official Azure SDK for Go Resource Graph client is also pain to use for these reasons:
-
-* It doesn't provide any way to unmarshal returned data into user-provided structs.
-* Paged results need to be handled by user directly, and this required understanding of what exactly is returned.
-* Interface is complicated with lots of parameters etc.
-
-So this package aims to provide a really simple way to use Azure Resource Graph, there isn't even a need to explicitly import any of Azure SDK bits. 
-
-
 
