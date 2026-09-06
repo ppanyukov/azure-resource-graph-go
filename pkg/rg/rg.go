@@ -1,6 +1,3 @@
-//go:build go1.18
-// +build go1.18
-
 // Package rg provides a simple interface to run Azure Resource Graph queries
 // and unmarshall results into custom types. It is based on the modified official
 // Azure SDK for Go.
