@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
@@ -61,7 +60,6 @@ func (q *QueryResultPager2[T]) HasNext() bool {
 
 // Get returns the data for the current page and advances to the next page.
 func (q *QueryResultPager2[T]) Get() ([]T, error) {
-	log.Printf("QueryResultPager2: getting next page")
 	// This is broadly a copy of Client.Resources2 with modifications
 	req, err := q.client.resourcesCreateRequest(q.ctx, q.query, q.options)
 	if err != nil {
