@@ -4,6 +4,12 @@ Date: 2026-09-05
 
 Status: Accepted
 
+> **Note:** [PR #15](https://github.com/ppanyukov/azure-resource-graph-go/pull/15)
+> renamed `RgClient`/`NewRgClient` (referenced throughout this ADR) to
+> `Client`/`NewClient`, to avoid the `rg.RgClient` package-name stutter,
+> and added a `ClientOptions` parameter to `NewClient`. The naming below
+> is left as originally written since it doesn't affect the decision.
+
 ## Context
 
 The natural API shape for a caller-owned client would be:
